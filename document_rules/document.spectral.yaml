@@ -1,0 +1,160 @@
+extends: spectral:oas
+formats: ["oas3"]
+functions: [checkAmount, checkEnum, checkHyphenPascal, checkCurrency]
+rules:
+  customHeaders:
+    description: "Headers must start with X"
+    message: "Headers must start with X-, so please find a new value for {{path}}."
+    recommended: true
+    type: style
+    given: "$..parameters.[?(@.in === 'header')].name"
+    severity: error
+    resolved: false
+    then:
+      function: pattern
+      functionOptions:
+        match: '^(x|X)-'
+
+  headerCase:
+    description: "Headers must start with X"
+    message: "{{error}}"
+    recommended: true
+    type: style
+    given: "$..parameters.[?(@.in === 'header')].name"
+    severity: error
+    resolved: false
+    then:
+      function: checkHyphenPascal
+
+  camelCases:
+    description: "Must be camel case"
+    message: "Property names must be camel case, please find new value for {{path}}."
+    recommended: true
+    type: style
+    given: "$.paths.*.*~"
+    severity: error
+    resolved: false
+    then:
+      function: casing
+      functionOptions:
+        type: camel
+
+  pascalCases:
+    description: "Must be pascal case"
+    message: "Object names must be pascal case, please find new value for {{path}}."
+    recommended: true
+    type: style
+    given: "$.components.*.*~"
+    severity: error
+    resolved: false
+    then:
+      function: casing
+      functionOptions:
+        type: pascal
+
+  getRequest:
+    description: "Must not have a request body"
+    message: "Get requests shouldn't have a request body"
+    recommended: true
+    type: style
+    given: "$..get.requestBody"
+    severity: error
+    resolved: false
+    then:
+      - field: "description"
+        function: falsy
+
+  putRequest:
+    description: "Must have a 200 response"
+    message: "Put requests should have a 200 response, please add it for {{path}}."
+    recommended: true
+    type: style
+    given: "$..put.responses"
+    severity: error
+    resolved: false
+    then:
+      - field: "200"
+        function: truthy
+
+  postRequest:
+    description: "Must have a 201 response"
+    message: "Post requests should have a 201 response, please add it for {{path}}."
+    recommended: true
+    type: style
+    given: "$..post.responses"
+    severity: warn
+    resolved: false
+    then:
+      - field: "201"
+        function: truthy
+
+  mustBeJson:
+    description: "Payload must be in json format"
+    message: "Payload must be in JSON format, please correct the format for {{path}}."
+    recommended: true
+    type: style
+    given: "$.paths.*.*.requestBody.*"
+    severity: warn
+    resolved: false
+    then:
+      - field: 'application/json'
+        function: truthy
+
+  dateFormat:
+    description: "Must be in the format of YYYY-MM-DD"
+    message: "{{error}}"
+    recommended: true
+    type: style
+    given: "$.[?(/-YY/.test(@.format))]"
+    severity: error
+    resolved: false
+    then:
+      - field: 'format'
+        function: falsy
+
+  checkCurrency:
+    description: "currency must fit the ISO standard"
+    message: "{{error}}"
+    recommended: true
+    type: style
+    given: "$.[?(/~*/.test(@.currency))].*.currency"
+    severity: error
+    resolved: false
+    then:
+      function: checkCurrency
+
+  checkAmount:
+    description: "Amount can't be negative"
+    message: "{{error}}"
+    recommended: true
+    type: style
+    given: "$.[?(/~*/.test(@.amount))].*.amount"
+    severity: error
+    resolved: false
+    then:
+      function: checkAmount
+
+  enumFormat:
+    description: "Must be in upper snake case"
+    message: "{{error}}"
+    recommended: true
+    type: style
+    given: "$.[?(/~*/.test(@.enum))].enum"
+    severity: warn
+    resolved: false
+    then:
+      function: checkEnum
+
+  responseAmount:
+    description: "API should at least have 2 response code"
+    message: "API should at least have 2 response codes, please add them for {{path}}."
+    recommended: true
+    type: style
+    given: "$.paths.*.*.responses"
+    severity: warn
+    resolved: false
+    then:
+      function: length
+      functionOptions:
+        min: 2
+  operation-tag-defined: off
